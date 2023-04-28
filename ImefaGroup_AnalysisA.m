@@ -1,17 +1,13 @@
-% Marion Rouault IMEFA study. 2021-2023.
+% Marion Rouault June 2021 fatigueZurich IMEFA. Updated March 2022.
 
-% This is associated with the following paper:
-% Rouault, M. et al. Interoceptive and metacognitive facets of
-% fatigue in multiple sclerosis. medRxiv 2023.01.23.23284429 (2023).
-
-% This program looks at the behaviour of MS patients in relation to a
+% this program looks at the behaviour of MS patients in relation to a
 % number of psychological and physiological variables and test our
 % pre-registered hypothesis A
 
 
 
 
-function [] = ImefaGroup_AnalysisA()
+function [] = ImefaGroup_hypA_sleepCorrected()
 
 % 1 is mfis, 2 is fss
 which_fa_quest = 1;
@@ -35,7 +31,7 @@ table = table2array(table) ;
 % extract data from Metacognition task 2 (ses2)
 ses = double(table(:,2));
 
-% => 71 participants have demographic data
+% 71 participants have demographic data
 ppidstring = table(ses==1,1);
 agestring = table(ses==1,3);
 sexstring = table(ses==1,4);
@@ -61,7 +57,7 @@ age = age(2:end);
 sex = sex(2:end);
 medi = medi(2:end);
 
-% two medication regressors: whether the person takes
+% add two medication regressors instead of one: whether the person takes
 % immuno drugs and / or sedating drugs
 
 medi_details_data = read_medi_details("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/Imefa_medication_ZMM_220717.csv");
@@ -75,10 +71,20 @@ medi_sedate = table2array(medi_sedate);
 medi_sedate = medi_sedate(2:end);
 
 
-
 % -------------- retrieve RedCap data for sleep metrics
 
 sleep_data = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Sleep_DATA_2022-04-04_1511.csv");
+%sleep_data = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Sleep_DATA_2022-03-30_1704.csv");
+
+sleep_hours = sleep_data(ses==1,5);
+sleep_interrupt = sleep_data(ses==1,6);
+
+sleep_hours = sleep_hours(2:end,:);
+sleep_interrupt = sleep_interrupt(2:end,:);% de mm que demo, rm PPID1
+
+sleep_hours = table2array(sleep_hours);
+sleep_interrupt = table2array(sleep_interrupt);
+
 
 sleep_data_labels = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Sleep_DATA_LABELS_2022-04-04_1511.csv");
 
@@ -87,8 +93,8 @@ sleep_data_labels = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_anal
 
 ppidpsqi = table2array(sleep_data_labels(ses==2,1));
 
-% Component 1: Subjective sleep quality?question 9
-psqi_cmp1 = sleep_data(ses==2,31);
+% Component 1: Subjective sleep quality?question 6
+psqi_cmp1 = sleep_data(ses==2,28);%sleep_data(ses==2,31);
 psqi_cmp1 = table2array(psqi_cmp1)';
 
 % Component 2: Sleep latency?questions 2 and 5a
@@ -149,7 +155,11 @@ clear j
 psqi_q1 = table2array(sleep_data(ses==2,13));%heure au lit
 psqi_q3 = table2array(sleep_data(ses==2,15));%heure debout
 
-% manual entry for sleep hours extraction:
+% hours_in_bed = hours(psqi_q3-psqi_q1);
+%fix format daytime
+% datevec(char(psqi_q3(2)))- datevec(char(psqi_q1(2)))
+
+%manual hack sad but efficient:
 hours_in_bed = [8.83 6.5 7.5 9 8 6.5 9.75 8.5 11 9.5 8.5 6.33 8.66 7.5 ...
     9 7.2 9.5 8.5 4.75 10 7.083 9 11 8.75 7.33 8 7.83 8 8.25 8.33 8.5 9.5 ...
     6.5 8 9.5 7.15 10 7.33 8 6.5 9 9.5 8.75 6.5 10 8.5 8.33 8 7.75 10 8.5 ...
@@ -188,23 +198,23 @@ end
 clear j
 
 
-% Component 6: Use of sleep medication?question 6
-psqi_q6 = table2array(sleep_data(ses==2,28));
+% Component 6: Use of sleep medication?question 7
+psqi_q6 = table2array(sleep_data(ses==2,29));%(ses==2,28));
 psqi_cmp6 = psqi_q6';
 
 
-% Component 7: Daytime dysfunction?questions 7 and 8
-psqi_q7 = table2array(sleep_data(ses==2,29));
+% Component 7: Daytime dysfunction?questions 8 and 9
 psqi_q8 = table2array(sleep_data(ses==2,30));
+psqi_q9 = table2array(sleep_data(ses==2,31));
 
-for j = 1:length(psqi_q7)
-    if psqi_q7(j) + psqi_q8(j) == 0
+for j = 1:length(psqi_q8)
+    if psqi_q8(j) + psqi_q9(j) == 0
         psqi_cmp7(j) = 0;
-    elseif (psqi_q7(j) + psqi_q8(j) == 1) || (psqi_q7(j) + psqi_q8(j) == 2)
+    elseif (psqi_q8(j) + psqi_q9(j) == 1) || (psqi_q8(j) + psqi_q9(j) == 2)
         psqi_cmp7(j) = 1;
-    elseif (psqi_q7(j) + psqi_q8(j) == 3) || (psqi_q7(j) + psqi_q8(j) == 4)
+    elseif (psqi_q8(j) + psqi_q9(j) == 3) || (psqi_q8(j) + psqi_q9(j) == 4)
         psqi_cmp7(j) = 2;
-    elseif psqi_q7(j) + psqi_q8(j) > 4
+    elseif psqi_q8(j) + psqi_q9(j) > 4
         psqi_cmp7(j) = 3;
     end
 end
@@ -215,7 +225,7 @@ psqi_tot = psqi_cmp1 + psqi_cmp2 + psqi_cmp3 + psqi_cmp4 + ...
     psqi_cmp5 + psqi_cmp6 + psqi_cmp7;
 
 % filter out patients who did do psqi and align with PPID
-% => 68 participants have psqi data
+% 68 participants have psqi data
 psqi_tot = psqi_tot(~isnan(psqi_tot))';
 
 
@@ -225,41 +235,41 @@ dates = read_diseaseDUR("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2I
 
 dates = dates(ses==1,:);
 
-dates = dates(2:end,:);
+dates = dates(2:end,:);% de mm que demo, rm PPID1
 
 consent_day = table2array(dates(:,5));
 diagnostic_day = table2array(dates(:,6));
 
 diseaseDuration = hours(consent_day-diagnostic_day);
-diseaseDuration(diseaseDuration<0)=0; %one person has mistake in dates
+diseaseDuration(diseaseDuration<0)=0;%one person has mistake in dates
 
 
-% -------------- retrieve RedCap data for questionnaires FSS GSES MAIA
+% -------------- retrieve RedCap data for questionnaires FFS GSES MAIA
 
-fssmaiagses = read_FFSMAIAGSES("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-FFSMAIAGSES_DATA_2021-07-05_1812.csv");
+ffsmaiagses = read_FFSMAIAGSES("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-FFSMAIAGSES_DATA_2021-07-05_1812.csv");
 
-fssmaiagses2 = fssmaiagses(ses==2,:);
-for i = 1:size(fssmaiagses2,1)
+ffsmaiagses2 = ffsmaiagses(ses==2,:);
+for i = 1:size(ffsmaiagses2,1)
     % General self-efficacy scale
-    gses_tot(i) = sum(table2array(fssmaiagses2(i,14:23)));
+    gses_tot(i) = sum(table2array(ffsmaiagses2(i,14:23)));
     
     % MAIA-3 subscale Not Worrying: ((5 - Q8) + (5 - Q9) + Q10) / 3
-    maia_not_worrying(i) = ((5-table2array(fssmaiagses2(i,31))) + (5-table2array(fssmaiagses2(i,32))) + table2array(fssmaiagses2(i,33)))/3 ;
+    maia_not_worrying(i) = ((5-table2array(ffsmaiagses2(i,31))) + (5-table2array(ffsmaiagses2(i,32))) + table2array(ffsmaiagses2(i,33)))/3 ;
     % MAIA-8 subscale Trusting: (Q30 + Q31 + Q32) / 3
-    maia_trusting(i) = (table2array(fssmaiagses2(i,53)) + table2array(fssmaiagses2(i,54)) + table2array(fssmaiagses2(i,55)))/3 ;
+    maia_trusting(i) = (table2array(ffsmaiagses2(i,53)) + table2array(ffsmaiagses2(i,54)) + table2array(ffsmaiagses2(i,55)))/3 ;
     % Sum of subscales 3 and 8:
     maia38(i) = maia_not_worrying(i) + maia_trusting(i);
     
     % filter out patients who did do gses
-    ppidgsesmaia(i) = table2array(fssmaiagses2(i,1)); % 68 participants have gses and maia data
+    ppidgsesmaia(i) = table2array(ffsmaiagses2(i,1)); % 68 participants have gses and maia data
 end
 
-fssmaiagses1 = fssmaiagses(ses==1,:);
-for i = 1:size(fssmaiagses1,1)
-    % Fatigue scale FSS
-    fss_tot(i) = sum(table2array(fssmaiagses1(i,5:13)))/9;
-    % filter out patients who did do FSS
-    ppidfss(i) = table2array(fssmaiagses1(i,1)); % 71 participants have fss data
+ffsmaiagses1 = ffsmaiagses(ses==1,:);
+for i = 1:size(ffsmaiagses1,1)
+    % Fatigue scale FFS
+    ffs_tot(i) = sum(table2array(ffsmaiagses1(i,5:13)))/9;
+    % filter out patients who did do FFS
+    ppidffs(i) = table2array(ffsmaiagses1(i,1)); % 71 participants have ffs data
 end
 
 
@@ -275,9 +285,10 @@ for i = 1:size(tblraw,1)
     mfis_tot(i) = sum(tblraw(i,2:22));
 end
 
+% todo here, construct ffs_tot
+
 % filter out patients who did do mfis and align with PPID
-ppidmfis = tblraw(~isnan(mfis_tot),1); 
-% => 61 participants have mfis data
+ppidmfis = tblraw(~isnan(mfis_tot),1); % 61 participants have mfis data
 mfis_tot = mfis_tot(~isnan(mfis_tot));
 
 
@@ -313,8 +324,8 @@ for subj = 1:length(hrv)
     end
 end
 
-% We are interested in autonomous regulation, therefore the most appropriate approach
-% is the following difference: value immediate standing minus 10minute lying
+% We are interested in autonomous regulation, therefore the most appropriate approach would
+% be to take the following difference: value ?immediate standing? minus ?10minute lying?
 % separately for blood pressure systolic, diastolic, and heart rate
 
 %deltaBP lying vs. standing (blood pressure, ast_bpxxx)
@@ -361,7 +372,9 @@ for su = 1:71
         x1 = [x1 ; deltaBP_systo(ppidheart==su)];
         x2 = [x2 ; deltaBP_diasto(ppidheart==su)];
         x3 = [x3 ; deltaHR(ppidheart==su)];
+        
         x4 = [x4 ; sudo(ppidsudo==su,:)];
+        
         x5 = [x5 ; hrv(ppidhrv==su,:)];
     end
 end
@@ -384,6 +397,13 @@ if plot_pca
 end
 
 
+% TBC: need to normalise before PCA?
+% x1 = (x1-mean(x1))/std(x1);
+% x2 = (x2-mean(x2))/std(x2);
+% x3 = (x3-mean(x3))/std(x3);
+% x4(:,1) = (x4(:,1)-mean(x4(:,1)))/std(x4(:,1));
+% x4(:,2) = (x4(:,2)-mean(x4(:,2)))/std(x4(:,2));
+% x5 = (x5-mean(x5))/std(x5);
 
 all_homeo = [x1 x2 x3 x4 x5];
 
@@ -417,7 +437,7 @@ if plot_pca
         'deltaHR','sudoHands','sudoFeet','HRV deep breathing'},'fontsize',10)
     title('PCA over 6 physio measures for 2 main components','fontsize',10)
 end
-
+44
 
 
 
@@ -426,7 +446,7 @@ end
 
 % A. Perceived fatigue is related to measures of interoception and autonomic regulation
 
-% - Dependent variable: FSS or MFIS scores
+% - Dependent variable: FFS or MFIS scores
 % - Regressors of interest:
 % -- RegI1: sum of the MAIA3 [Not-Worrying] and MAIA8 [Trusting]
 % -- RegI2: first principal component of autonomic measures (HRV, deltaBP and
@@ -434,16 +454,16 @@ end
 % - Regressors of no interest: duration of disease, age, sex, medication (dose and type).
 
 % Hypothesis A1: (RegI1)
-% Feeling of being in homeostasis and control (i.e. MAIA3+8) are negatively associated with FSS
+% Feeling of being in homeostasis and control (i.e. MAIA3+8) are negatively associated with FFS
 % Hypothesis A2: (RegI2)
-% Integrity of homeostatic regulation and autonomic function are negatively associated with FSS
+% Integrity of homeostatic regulation and autonomic function are negatively associated with FFS
 
 
 % find restricted pool of participants who have demo + auton + mfis data
 
 % initialise dependent variable (either fatigue score)
 y_mfis = [];
-y_fss = [];
+y_ffs = [];
 % initialise regressors of interest
 x_maia38 = []; % RegI1
 x_homeo  = []; % RegI2
@@ -470,7 +490,7 @@ x_sleep = [];
 if which_fa_quest == 1
     ppidfa = ppidmfis;
 elseif which_fa_quest == 2
-    ppidfa = ppidfss;
+    ppidfa = ppidffs;
 end
 
 for s = 1:length(ppidstring) % the largest sample
@@ -478,13 +498,12 @@ for s = 1:length(ppidstring) % the largest sample
     if ismember(s,ppidfa) && ismember(s,ppidgsesmaia) && ismember(s,ppidhomeo) && ismember(s,ppiddemo) && ismember(s,ppidpsqi)
         % patient s has all required types of data: include in analysis
         
-        % define dependent variable (either of the two fatigue scores)
+        % define dependent variable (either fatigue score)
         if which_fa_quest == 1
             y_mfis = [y_mfis ; mfis_tot(ppidmfis==s)];
         elseif which_fa_quest == 2
-            y_fss  = [y_fss  ; fss_tot(ppidfss==s)];
-        end
-        % define regressors of interest
+            y_ffs  = [y_ffs  ; ffs_tot(ppidffs==s)];
+        end        % define regressors of interest
         x_maia38 = [x_maia38  ; maia38(ppidgsesmaia==s)];
         x_homeo  = [x_homeo  ; coef_homeo(ppidhomeo==s)];
         x_homeo1 = [x_homeo1  ; homeo_pca1(ppidhomeo==s)];
@@ -509,15 +528,16 @@ for s = 1:length(ppidstring) % the largest sample
         disp(['missing some of the data for patient #',num2str(s)])
     end
 end
-% => 53 patients remained in this restricted pool (MFIS) (63 for FSS)
+% => 53 patients remained in this restricted pool (MFIS) (63 for FFS)
 
 
-% side note: visualise correlation matrix between measurements
+% aparte: correlation matrix between measurements
 R2 = corrcov(cov([y_mfis x_maia38 x_homeo x_age x_sex x_medi x_dur x_sleep]));
 R3 = corrcov(cov([y_mfis x_maia38 x_homeoR1 x_homeoR2 x_homeoR3 x_homeoR4 x_homeoR5 x_homeoR6]));
 R4 = corrcov(cov([y_mfis x_maia38 x_homeo x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep]));
 if plot_pca
     figure;
+    % heatmap(R2);
     heatmap(R2,'Colormap',parula,'FontSize',15,...
         'ColorLimits',[-1,1], ...
         'XData',{'MFIS','MAIA','PC1','age','sex',...
@@ -543,6 +563,7 @@ if plot_pca
         'YData',{'MFIS','MAIA','PC1','age','sex',...
         'mediImmuno','mediSedate','diseaseDur','sleep'});
     set(gca,'FontName','Helvetica','FontSize',15);
+    
 end
 
 
@@ -559,6 +580,7 @@ x_homeoR5 = (x_homeoR5-mean(x_homeoR5))/std(x_homeoR5);
 x_homeoR6 = (x_homeoR6-mean(x_homeoR6))/std(x_homeoR6);
 x_age = (x_age-mean(x_age))/std(x_age);
 x_sex = (x_sex-mean(x_sex))/std(x_sex);
+x_medi = (x_medi-mean(x_medi))/std(x_medi);
 x_medi_immuno = (x_medi_immuno-mean(x_medi_immuno))/std(x_medi_immuno);
 x_medi_sedate = (x_medi_sedate-mean(x_medi_sedate))/std(x_medi_sedate);
 x_dur = (x_dur-mean(x_dur))/std(x_dur);
@@ -567,15 +589,17 @@ x_sleep = (x_sleep-mean(x_sleep))/std(x_sleep);
 % build regressor matrix
 if how_many_pca_compo == 2
     X = [x_maia38 x_homeo1 x_homeo2 x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    %X = [x_maia38 x_homeo1 x_homeo2 x_age x_sex x_medi x_dur x_sleep];
 elseif how_many_pca_compo == 1
     X = [x_maia38 x_homeo x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    %X = [x_maia38 x_homeo x_age x_sex x_medi x_dur x_sleep];
 elseif how_many_pca_compo == 6 % no PCs, raw 6 reg of origin
-    X = [x_maia38 x_homeoR1 x_homeoR2 x_homeoR3 x_homeoR4 x_homeoR5 x_homeoR6 ...
-        x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    X = [x_maia38 x_homeoR1 x_homeoR2 x_homeoR3 x_homeoR4 x_homeoR5 x_homeoR6 x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    %X = [x_maia38 x_homeoR1 x_homeoR2 x_homeoR3 x_homeoR4 x_homeoR5 x_homeoR6 x_age x_sex x_medi x_dur x_sleep];
     Xalt = [x_homeoR1 x_homeoR2 x_homeoR3 x_homeoR4 x_homeoR5 x_homeoR6];
 elseif how_many_pca_compo == 7 % no PCs, raw 6 reg of origin minus MAIA
-    X = [x_homeoR1 x_homeoR2 x_homeoR3 x_homeoR4 x_homeoR5 x_homeoR6 ...
-        x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    X = [x_homeoR1 x_homeoR2 x_homeoR3 x_homeoR4 x_homeoR5 x_homeoR6 x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    %X = [x_homeoR1 x_homeoR2 x_homeoR3 x_homeoR4 x_homeoR5 x_homeoR6 x_age x_sex x_medi x_dur x_sleep];
 end
 
 if how_many_pca_compo == 1
@@ -585,16 +609,23 @@ if how_many_pca_compo == 1
         [betaA,~,statsA] = glmfit(X,y_mfis);
         % perform GLM to get F-test
         mdl = fitglm(X,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8','Distribution','normal');
+        %mdl = fitglm(X,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7','Distribution','normal');
         p_mdl = coefTest(mdl);
+        % The small p-value indicates that the model fits significantly better
+        % than a degenerate model consisting of only an intercept term.
+        
+        %p = coefTest(mdl,[0 1 0]) % get predictors significance: works!:)
+        
         disp 'Ftest Model A with MFIS, pvalue='
         p_mdl
     elseif which_fa_quest == 2
         % perform regression
-        [betaA,~,statsA] = glmfit(X,y_fss);
+        [betaA,~,statsA] = glmfit(X,y_ffs);
         % perform GLM to get F-test
-        mdl = fitglm(X,y_fss,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8','Distribution','normal');
+        mdl = fitglm(X,y_ffs,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8','Distribution','normal');
+        %mdl = fitglm(X,y_ffs,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7','Distribution','normal');
         p_mdl = coefTest(mdl);
-        disp 'Ftest Model A with FSS, pvalue='
+        disp 'Ftest Model A with FFS, pvalue='
         p_mdl
     end
 elseif how_many_pca_compo == 2
@@ -604,16 +635,18 @@ elseif how_many_pca_compo == 2
         [betaA,~,statsA] = glmfit(X,y_mfis);
         % perform GLM to get F-test
         mdl = fitglm(X,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9','Distribution','normal');
+        %mdl = fitglm(X,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8','Distribution','normal');
         p_mdl = coefTest(mdl);
         disp 'Ftest Model A with MFIS, pvalue='
         p_mdl
     elseif which_fa_quest == 2
         % perform regression
-        [betaA,~,statsA] = glmfit(X,y_fss);
+        [betaA,~,statsA] = glmfit(X,y_ffs);
         % perform GLM to get F-test
-        mdl = fitglm(X,y_fss,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9','Distribution','normal');
+        mdl = fitglm(X,y_ffs,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9','Distribution','normal');
+        %mdl = fitglm(X,y_ffs,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8','Distribution','normal');
         p_mdl = coefTest(mdl);
-        disp 'Ftest Model A with FSS, pvalue='
+        disp 'Ftest Model A with FFS, pvalue='
         p_mdl
     end
 elseif how_many_pca_compo == 6
@@ -623,6 +656,7 @@ elseif how_many_pca_compo == 6
         [betaA,~,statsA] = glmfit(X,y_mfis);
         % perform GLM to get F-test
         mdl = fitglm(X,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11 + x12 + x13','Distribution','normal');
+        %mdl = fitglm(X,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11 + x12','Distribution','normal');
         p_mdl = coefTest(mdl);
         disp 'Ftest Model A with MFIS, pvalue='
         p_mdl
@@ -630,30 +664,31 @@ elseif how_many_pca_compo == 6
         disp 'Ftest Model A with MFIS, test only the six physio regz, pvalue='
         p_mdl
         
-        % perform regression
-        [betaA,~,statsA] = glmfit(Xalt,y_mfis);
-        mdl = fitglm(Xalt,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6','Distribution','normal');
-        p_mdl = coefTest(mdl);
-        disp 'Ftest Model A with MFIS and only six physio predictors, pvalue='
-        p_mdl
+%         % perform regression
+%         [betaA,~,statsA] = glmfit(Xalt,y_mfis);
+%         mdl = fitglm(Xalt,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6','Distribution','normal');
+%         p_mdl = coefTest(mdl);
+%         disp 'Ftest Model A with MFIS and only six physio predictors, pvalue='
+%         p_mdl
     elseif which_fa_quest == 2
         % perform regression
-        [betaA,~,statsA] = glmfit(X,y_fss);
+        [betaA,~,statsA] = glmfit(X,y_ffs);
         % perform GLM to get F-test
-        mdl = fitglm(X,y_fss,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11 + x12 + x13','Distribution','normal');
+        mdl = fitglm(X,y_ffs,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11 + x12 + x13','Distribution','normal');
+        % mdl = fitglm(X,y_ffs,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11 + x12','Distribution','normal');
         p_mdl = coefTest(mdl);
-        disp 'Ftest Model A with FSS, pvalue='
+        disp 'Ftest Model A with FFS, pvalue='
         p_mdl
         p_mdl = coefTest(mdl,[0 0 1 1 1 1 1 1 0 0 0 0 0 0]);
-        disp 'Ftest Model A with FSS, test only the six physio regz, pvalue='
+        disp 'Ftest Model A with FFS, test only the six physio regz, pvalue='
         p_mdl
         
-        % perform regression
-        [betaA,~,statsA] = glmfit(Xalt,y_fss);
-        mdl = fitglm(Xalt,y_fss,'y ~ x1 + x2 + x3 + x4 + x5 + x6','Distribution','normal');
-        p_mdl = coefTest(mdl);
-        disp 'Ftest Model A with FSS and only six physio predictors, pvalue='
-        p_mdl
+%         % perform regression
+%         [betaA,~,statsA] = glmfit(Xalt,y_ffs);
+%         mdl = fitglm(Xalt,y_ffs,'y ~ x1 + x2 + x3 + x4 + x5 + x6','Distribution','normal');
+%         p_mdl = coefTest(mdl);
+%         disp 'Ftest Model A with FFS and only six physio predictors, pvalue='
+%         p_mdl
     end
 elseif how_many_pca_compo == 7
     disp 'Model with all six physio reg (no PCs) minus MAIA:'
@@ -662,6 +697,7 @@ elseif how_many_pca_compo == 7
         [betaA,~,statsA] = glmfit(X,y_mfis);
         % perform GLM to get F-test
         mdl = fitglm(X,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11 + x12','Distribution','normal');
+        %mdl = fitglm(X,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11','Distribution','normal');
         p_mdl = coefTest(mdl);
         disp 'Ftest Model A with MFIS, pvalue='
         p_mdl
@@ -671,14 +707,15 @@ elseif how_many_pca_compo == 7
         
     elseif which_fa_quest == 2
         % perform regression
-        [betaA,~,statsA] = glmfit(X,y_fss);
+        [betaA,~,statsA] = glmfit(X,y_ffs);
         % perform GLM to get F-test
-        mdl = fitglm(X,y_fss,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11 + x12','Distribution','normal');
+        mdl = fitglm(X,y_ffs,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11 + x12','Distribution','normal');
+        % mdl = fitglm(X,y_ffs,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 +x10 + x11','Distribution','normal');
         p_mdl = coefTest(mdl);
-        disp 'Ftest Model A with FSS, pvalue='
+        disp 'Ftest Model A with FFS, pvalue='
         p_mdl
         p_mdl = coefTest(mdl,[0 1 1 1 1 1 1 0 0 0 0 0 0]);
-        disp 'Ftest Model A with FSS, test only the six physio regz, pvalue='
+        disp 'Ftest Model A with FFS, test only the six physio regz, pvalue='
         p_mdl
         
     end
@@ -692,6 +729,11 @@ statsA.t(2:end)
 disp 'pvalues:'
 statsA.p(2:end)
 
+% one tailed t test [h,p,ci,stats] = ttest(statsA.beta(2:end),0,'Tail','right')
+% but not appropriate for betas between-group
+% use glmfit to extract stats.p = 2 * normcdf(-abs(stats.t))
+% seulement un facteur 2 entre eux dans notre cas
+
 
 % examine Benjamini-Hochler FDR correction:
 
@@ -703,7 +745,13 @@ ordered_pvalues = [ordered_pvalues [1:length(statsA.p(2:end))]'];
 % what percentage of FDR rate you decide
 fdr_rate = .05;
 % how many tests do you want to correct for
-m = 3;
+if how_many_pca_compo == 1
+    m = 2; % here, maia and PC1
+elseif how_many_pca_compo == 2
+    m = 3; % here, maia and PC1 and PC2
+else
+    m = 2;
+end
 % calculate each individual p-value?s Benjamini-Hochberg critical value
 ordered_pvalues(:,4) = ordered_pvalues(:,3)./m*fdr_rate;
 % identify the highest p-value that is also smaller than the critical value
@@ -719,7 +767,7 @@ hold on
 if which_fa_quest == 1
     ylim([-10,11]);%scale for MFIS
 elseif which_fa_quest == 2
-    ylim([-0.8,1.2]);%scale for FSS
+    ylim([-0.8,1.2]);%scale for FFS
 end
 nbar = length(betaA)-1;
 pbar = 1/2*(nbar+0.2)/2.2*2;
@@ -739,14 +787,15 @@ if how_many_pca_compo == 2
     fname = './FigureA_PC1andPC2';
 elseif how_many_pca_compo == 1
     set(gca,'XTick',1:size(X,2),'XTickLabel',{'MAIA_3_8','homeo','age','sex','mediImmuno','medicSedate','duration','sleep'});
+    %set(gca,'XTick',1:size(X,2),'XTickLabel',{'MAIA_3_8','homeo','age','sex','medic','duration','sleep'});
     fname = './FigureA_PC1';
 end
 if which_fa_quest == 1
     xlabel('Contributors to fatigue scores (MFIS)','FontName','Helvetica','FontSize',8);
     fscale = '_MFIS';
 elseif which_fa_quest == 2
-    xlabel('Contributors to fatigue scores (FSS)','FontName','Helvetica','FontSize',8);
-    fscale = '_FSS';
+    xlabel('Contributors to fatigue scores (FFS)','FontName','Helvetica','FontSize',8);
+    fscale = '_FFS';
 end
 
 set(hf,'PaperPositionMode','manual', ...
@@ -755,4 +804,6 @@ set(hf,'PaperPositionMode','manual', ...
 figure(hf);
 print([fname,fscale],'-painters','-dpdf');
 
+
 end
+

@@ -1,20 +1,16 @@
-% Marion Rouault IMEFA study. 2021-2023.
+% Marion Rouault July 2021 fatigueZurich IMEFA. Updated March 2022.
 
-% This is associated with the following paper:
-% Rouault, M. et al. Interoceptive and metacognitive facets of
-% fatigue in multiple sclerosis. medRxiv 2023.01.23.23284429 (2023).
-
-% This program looks at the behaviour of MS patients in relation to a
+% this program looks at the behaviour of MS patients in relation to a
 % number of psychological and physiological variables and test our
 % pre-registered hypothesis C: Measures of interoception and autonomic
 % regulation are related to measures of metacognition
 
 
 
-function [] = ImefaGroup_AnalysisC()
+function [] = ImefaGroup_hypC_sleepCorrected()
 
 % test hypothesis C1 or C2
-which_hyp = 2;
+which_hyp = 2; 
 % colors
 rgb = [[0.5,0.8,0];[0.8,0.5,0];[0,0.2,0.8]; ...
     [0.8,0,0.2];[0.5,0,0.8]];
@@ -29,12 +25,14 @@ rgb = [[0.5,0.8,0];[0.8,0.5,0];[0,0.2,0.8]; ...
 % -------------- retrieve metacognition data for inter-individual analyses:
 
 load groupSES2
+% [ppid,groupe_acc,groupe_rt,groupe_confLevel,groupe_confCorrIncorr,groupe_mratios_cl,groupe_hmratios'];
 
-ppidmeta2    = groupSES2(:,1);
+ppidmeta2    = groupSES2(:,1); % 67 participants did metacogtask2
 acc2         = groupSES2(:,2);
 metacogbias2 = groupSES2(:,4);
-metacogeff   = groupSES2(:,11);
-
+metacogeff   = groupSES2(:,9);%groupSES2(:,7);
+metacogeffsingle = groupSES2(:,11);
+metacogeff=metacogeffsingle;
 
 
 % -------------- retrieve RedCap data for inter-individual analyses:
@@ -73,7 +71,7 @@ age = age(2:end);
 sex = sex(2:end);
 medi = medi(2:end);
 
-% two medication regressors: whether the person takes
+% add two medication regressors instead of one: whether the person takes
 % immuno drugs and / or sedating drugs
 
 medi_details_data = read_medi_details("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/Imefa_medication_ZMM_220717.csv");
@@ -90,6 +88,17 @@ medi_sedate = medi_sedate(2:end);
 % -------------- retrieve RedCap data for sleep metrics
 
 sleep_data = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Sleep_DATA_2022-04-04_1511.csv");
+%sleep_data = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Sleep_DATA_2022-03-30_1704.csv");
+
+sleep_hours = sleep_data(ses==1,5);
+sleep_interrupt = sleep_data(ses==1,6);
+
+sleep_hours = sleep_hours(2:end,:);
+sleep_interrupt = sleep_interrupt(2:end,:);% de mm que demo, rm PPID1
+
+sleep_hours = table2array(sleep_hours);
+sleep_interrupt = table2array(sleep_interrupt);
+
 
 sleep_data_labels = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Sleep_DATA_LABELS_2022-04-04_1511.csv");
 
@@ -98,8 +107,8 @@ sleep_data_labels = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_anal
 
 ppidpsqi = table2array(sleep_data_labels(ses==2,1));
 
-% Component 1: Subjective sleep quality?question 9
-psqi_cmp1 = sleep_data(ses==2,31);
+% Component 1: Subjective sleep quality?question 6
+psqi_cmp1 = sleep_data(ses==2,28);%sleep_data(ses==2,31);
 psqi_cmp1 = table2array(psqi_cmp1)';
 
 % Component 2: Sleep latency?questions 2 and 5a
@@ -160,7 +169,11 @@ clear j
 psqi_q1 = table2array(sleep_data(ses==2,13));%heure au lit
 psqi_q3 = table2array(sleep_data(ses==2,15));%heure debout
 
-% manual entry for sleep hours extraction:
+% hours_in_bed = hours(psqi_q3-psqi_q1);
+%fix format daytime
+% datevec(char(psqi_q3(2)))- datevec(char(psqi_q1(2)))
+
+%manual hack sad but efficient:
 hours_in_bed = [8.83 6.5 7.5 9 8 6.5 9.75 8.5 11 9.5 8.5 6.33 8.66 7.5 ...
     9 7.2 9.5 8.5 4.75 10 7.083 9 11 8.75 7.33 8 7.83 8 8.25 8.33 8.5 9.5 ...
     6.5 8 9.5 7.15 10 7.33 8 6.5 9 9.5 8.75 6.5 10 8.5 8.33 8 7.75 10 8.5 ...
@@ -199,23 +212,23 @@ end
 clear j
 
 
-% Component 6: Use of sleep medication?question 6
-psqi_q6 = table2array(sleep_data(ses==2,28));
+% Component 6: Use of sleep medication?question 7
+psqi_q6 = table2array(sleep_data(ses==2,29));%(ses==2,28));
 psqi_cmp6 = psqi_q6';
 
 
-% Component 7: Daytime dysfunction?questions 7 and 8
-psqi_q7 = table2array(sleep_data(ses==2,29));
+% Component 7: Daytime dysfunction?questions 8 and 9
 psqi_q8 = table2array(sleep_data(ses==2,30));
+psqi_q9 = table2array(sleep_data(ses==2,31));
 
-for j = 1:length(psqi_q7)
-    if psqi_q7(j) + psqi_q8(j) == 0
+for j = 1:length(psqi_q8)
+    if psqi_q8(j) + psqi_q9(j) == 0
         psqi_cmp7(j) = 0;
-    elseif (psqi_q7(j) + psqi_q8(j) == 1) || (psqi_q7(j) + psqi_q8(j) == 2)
+    elseif (psqi_q8(j) + psqi_q9(j) == 1) || (psqi_q8(j) + psqi_q9(j) == 2)
         psqi_cmp7(j) = 1;
-    elseif (psqi_q7(j) + psqi_q8(j) == 3) || (psqi_q7(j) + psqi_q8(j) == 4)
+    elseif (psqi_q8(j) + psqi_q9(j) == 3) || (psqi_q8(j) + psqi_q9(j) == 4)
         psqi_cmp7(j) = 2;
-    elseif psqi_q7(j) + psqi_q8(j) > 4
+    elseif psqi_q8(j) + psqi_q9(j) > 4
         psqi_cmp7(j) = 3;
     end
 end
@@ -226,7 +239,7 @@ psqi_tot = psqi_cmp1 + psqi_cmp2 + psqi_cmp3 + psqi_cmp4 + ...
     psqi_cmp5 + psqi_cmp6 + psqi_cmp7;
 
 % filter out patients who did do psqi and align with PPID
-% => 68 participants have psqi data
+% 68 participants have psqi data
 psqi_tot = psqi_tot(~isnan(psqi_tot))';
 
 
@@ -237,43 +250,42 @@ dates = read_diseaseDUR("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2I
 
 dates = dates(ses==1,:);
 
-dates = dates(2:end,:);
+dates = dates(2:end,:);% de mm que demo, rm PPID1
 
 consent_day = table2array(dates(:,5));
 diagnostic_day = table2array(dates(:,6));
 
 diseaseDuration = hours(consent_day-diagnostic_day);
-diseaseDuration(diseaseDuration<0)=0; % one person has mistake in dates
+diseaseDuration(diseaseDuration<0)=0;%one person has mistake in dates
 
 
 
-% -------------- retrieve RedCap data for questionnaires FSS GSES MAIA
+% -------------- retrieve RedCap data for questionnaires FFS GSES MAIA
 
-fssmaiagses = read_FFSMAIAGSES("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-FFSMAIAGSES_DATA_2021-07-05_1812.csv");
+ffsmaiagses = read_FFSMAIAGSES("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-FFSMAIAGSES_DATA_2021-07-05_1812.csv");
 
-fssmaiagses2 = fssmaiagses(ses==2,:);
-for i = 1:size(fssmaiagses2,1)
+ffsmaiagses2 = ffsmaiagses(ses==2,:);
+for i = 1:size(ffsmaiagses2,1)
     % General self-efficacy scale
-    gses_tot(i) = sum(table2array(fssmaiagses2(i,14:23)));
+    gses_tot(i) = sum(table2array(ffsmaiagses2(i,14:23)));
     
     % MAIA-3 subscale Not Worrying: ((5 - Q8) + (5 - Q9) + Q10) / 3
-    maia_not_worrying(i) = ((5-table2array(fssmaiagses2(i,31))) + (5-table2array(fssmaiagses2(i,32))) + table2array(fssmaiagses2(i,33)))/3 ;
+    maia_not_worrying(i) = ((5-table2array(ffsmaiagses2(i,31))) + (5-table2array(ffsmaiagses2(i,32))) + table2array(ffsmaiagses2(i,33)))/3 ;
     % MAIA-8 subscale Trusting: (Q30 + Q31 + Q32) / 3
-    maia_trusting(i) = (table2array(fssmaiagses2(i,53)) + table2array(fssmaiagses2(i,54)) + table2array(fssmaiagses2(i,55)))/3 ;
+    maia_trusting(i) = (table2array(ffsmaiagses2(i,53)) + table2array(ffsmaiagses2(i,54)) + table2array(ffsmaiagses2(i,55)))/3 ;
     % Sum of subscales 3 and 8:
     maia38(i) = maia_not_worrying(i) + maia_trusting(i);
     
     % filter out patients who did do gses
-    ppidgsesmaia(i) = table2array(fssmaiagses2(i,1)); % 68 participants have gses and maia data
+    ppidgsesmaia(i) = table2array(ffsmaiagses2(i,1)); % 68 participants have gses and maia data
 end
 
-fssmaiagses1 = fssmaiagses(ses==1,:);
-for i = 1:size(fssmaiagses1,1)
-    % Fatigue scale FSS
-    fss_tot(i) = sum(table2array(fssmaiagses1(i,5:13)))/9;
-    % filter out patients who did do FSS
-    ppidfss(i) = table2array(fssmaiagses1(i,1)); 
-    % => 71 participants have fss data
+ffsmaiagses1 = ffsmaiagses(ses==1,:);
+for i = 1:size(ffsmaiagses1,1)
+    % Fatigue scale FFS
+    ffs_tot(i) = sum(table2array(ffsmaiagses1(i,5:13)))/9;
+    % filter out patients who did do FFS
+    ppidffs(i) = table2array(ffsmaiagses1(i,1)); % 71 participants have ffs data
 end
 
 
@@ -282,14 +294,13 @@ end
 msse = read_MSSE("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-MSSE_DATA_2022-04-29_1255.csv");
 
 msse_ses2 = msse(ses==2,:);
-for i = 1:size(fssmaiagses2,1)
+for i = 1:size(ffsmaiagses2,1)
     
     % MS self-efficacy scale
     msse_tot(i) = sum(table2array(msse_ses2(i,5:14)));
     
     % filter out patients who did do gses
-    ppidmsse(i) = table2array(msse_ses2(i,1)); 
-    % => 68 participants have gses data
+    ppidmsse(i) = table2array(msse_ses2(i,1)); % 68 participants have gses data
 end
 
 
@@ -299,9 +310,13 @@ end
 
 if which_hyp == 2
     
+    %sympathetic skin response: ssr_left_hand_ms,ssr_left_hand_mv,etc:8
+    %measurements ommitted for now due to unreliability
+    
     InterocepvarDATA = read_homeo("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Interocepvar_DATA_2021-07-12_1430.csv");
     
     ppidses2 = table2array(InterocepvarDATA(ses==2,1));
+    
     
     % sudomotor activity averaging sudomotor_hands and sudomotor_feet
     sudo = table2array(InterocepvarDATA(ses==2,5:6));
@@ -376,20 +391,30 @@ if which_hyp == 2
             x1 = [x1 ; deltaBP_systo(ppidheart==su)];
             x2 = [x2 ; deltaBP_diasto(ppidheart==su)];
             x3 = [x3 ; deltaHR(ppidheart==su)];
+            
             x4 = [x4 ; sudo(ppidsudo==su,:)];
+            
             x5 = [x5 ; hrv(ppidhrv==su,:)];
         end
     end
     
     all_homeo = [x1 x2 x3 x4 x5];
+    %all_homeo = [deltaBP_systo deltaBP_diasto deltaHR sudo hrv];
     
     % run the PCA over all physiological measurements:
     [COEFF, SCORE, LATENT]  = pca(all_homeo);
+    % The rows of coeff contain the coefficients for the 6 ingredient variables,
+    % and its columns correspond to 6 principal components.
+    
+    %   [COEFF, SCORE, LATENT] = PCA(X) returns the principal component score, which is
+    %   the representation of X in the principal component space. Rows of SCORE
+    %   correspond to observations, columns to components. returns the principal component
+    %   variances, i.e., the eigenvalues of the covariance matrix of X, in LATENT.
     
     coef_homeo = SCORE(:,1); % first component will be our regressor
     
     % plot the spectrum of the eigenvalues when doing the PCA
-    % => to examine whether dimensionality reduction via PCA
+    % => in order to make sure that dimensionality reduction via PCA
     % actually makes sense for the physiological data:
     
     hf = figure('Color','white');
@@ -401,8 +426,9 @@ if which_hyp == 2
     set(gca,'TickDir','out','TickLength',[1,1]*0.02/max(1,1));
     set(gca,'FontName','Helvetica','FontSize',15);
     figure(hf);
-    fname = './FigureImefa_PCAphysio';
-    print(fname,'-painters','-dpdf');
+    fname = ['./FigureImefa_PCAphysio'];
+    %print(fname,'-painters','-dpdf');
+    
     
 end
 
@@ -501,6 +527,7 @@ if which_hyp == 1
     rho(2)
     pval(2)
     
+    
     hf = figure('Color','white');
     hold on;
     ylim([10,40]);
@@ -515,7 +542,8 @@ if which_hyp == 1
         'PaperPosition',[2.5,13,16,4],'PaperUnits','centimeters', ...
         'PaperType','A4','PaperOrientation','portrait');
     figure(hf);
-    print('GSES_mbias_correl','-painters','-dpdf');
+    %print('GSES_mbias_correl','-painters','-dpdf');
+    
     
     hf = figure('Color','white');
     hold on;
@@ -531,7 +559,7 @@ if which_hyp == 1
         'PaperPosition',[2.5,13,16,4],'PaperUnits','centimeters', ...
         'PaperType','A4','PaperOrientation','portrait');
     figure(hf);
-    print('MSSE_mbias_correl','-painters','-dpdf');
+    %print('MSSE_mbias_correl','-painters','-dpdf');
 end
 
 
@@ -556,8 +584,10 @@ end
 % zscore our regressors for comparability of regressions coefs:
 x_metacogbias2 = (x_metacogbias2-mean(x_metacogbias2))/std(x_metacogbias2);
 x_metacogeff = (x_metacogeff-mean(x_metacogeff))/std(x_metacogeff);
+x_acc2 = (x_acc2-mean(x_acc2))/std(x_acc2);
 x_age = (x_age-mean(x_age))/std(x_age);
 x_sex = (x_sex-mean(x_sex))/std(x_sex);
+x_medi = (x_medi-mean(x_medi))/std(x_medi);
 x_medi_immuno = (x_medi_immuno-mean(x_medi_immuno))/std(x_medi_immuno);
 x_medi_sedate = (x_medi_sedate-mean(x_medi_sedate))/std(x_medi_sedate);
 x_dur  = (x_dur-mean(x_dur))/std(x_dur);
@@ -565,12 +595,16 @@ x_sleep  = (x_sleep-mean(x_sleep))/std(x_sleep);
 
 % build regressor matrix
 X = [x_metacogbias2 x_metacogeff x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+%X = [x_metacogbias2 x_metacogeff x_age x_sex x_medi x_dur x_sleep];
+%X = [x_metacogbias2 x_metacogeff x_acc2 x_age x_sex x_medi x_dur x_sleep];
+
 
 if which_hyp == 1
     % perform regression
     [betaC,~,statsC] = glmfit(X,y_maia38);
     fname = './FigureC1';
     % perform GLM to get F-test
+    %mdl = fitglm(X,y_maia38,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7','Distribution','normal');
     mdl = fitglm(X,y_maia38,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8','Distribution','normal');
     p_mdl = coefTest(mdl);
     disp 'Ftest Model C1 with MFIS, pvalue='
@@ -580,6 +614,7 @@ elseif which_hyp == 2
     [betaC,~,statsC] = glmfit(X,y_homeo);
     fname = './FigureC2';
     % perform GLM to get F-test
+    %mdl = fitglm(X,y_homeo,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7','Distribution','normal');
     mdl = fitglm(X,y_homeo,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8','Distribution','normal');
     p_mdl = coefTest(mdl);
     disp 'Ftest Model C2 with MFIS, pvalue='
@@ -620,8 +655,11 @@ set(gca,'Layer','top','Box','off','PlotBoxAspectRatio',[pbar,1,1]);
 set(gca,'TickDir','out','TickLength',[1,1]*0.02/max(pbar,1));
 set(gca,'FontName','Helvetica','FontSize',8);
 set(gca,'XTick',1:size(X,2),'XTickLabel',{'m.bias','m.effi','age','sex','mediImmuno','mediSedate','dur','sleep'});
+%set(gca,'XTick',1:size(X,2),'XTickLabel',{'m.bias','m.effi','age','sex','medic','dur','sleep'});
+%set(gca,'XTick',1:size(X,2),'XTickLabel',{'m.bias','m.effi','accu','age','sex','medic','dur','sleep'});
 ylabel('Regression coefficients','FontName','Helvetica','FontSize',8);
 if which_hyp == 1
+    %xlabel('Contributors to General Self-Efficacy score','FontName','Helvetica','FontSize',8);
     xlabel('Contributors to MAIA scores','FontName','Helvetica','FontSize',8);
     set(gca,'YTick',-1:1,'YTickLabel',{'-1','0','1'});
 elseif which_hyp == 2
@@ -633,4 +671,8 @@ set(hf,'PaperPositionMode','manual', ...
 figure(hf);
 print(fname,'-painters','-dpdf');
 
+44
+
 end
+
+

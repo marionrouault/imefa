@@ -1,27 +1,23 @@
-% Marion Rouault IMEFA study. 2021-2023.
+% Marion Rouault June 2021 fatigueZurich IMEFA. Updated March 2022.
 
-% This is associated with the following paper:
-% Rouault, M. et al. Interoceptive and metacognitive facets of
-% fatigue in multiple sclerosis. medRxiv 2023.01.23.23284429 (2023).
-
-% This program looks at the behaviour of MS patients in relation to a
+% this program looks at the behaviour of MS patients in relation to a
 % number of psychological and physiological variables and test our
 % pre-registered hypothesis B. Perceived fatigue is related to
 % measures of metacognition
 
 
 
-function [] = ImefaGroup_AnalysisB()
+function [] = ImefaGroup_hypB_sleepCorrected()
 
 % test hypothesis B1 or B2
-which_hyp = 2;
-% print pdfs of figures?
-print_fig = false;
+which_hyp = 2; 
+% print pdfs of figures
+print_fig = true;
 % analysis of the demographic characteristics?
 plot_demo = 0;
 % colors
 rgb = [[0,0.2,0.8];[0.8,0,0.2];[0.5,0,0.8]; ...
-    [0.5,0.8,0];[0.2,0.5,0];[0.2,0.5,0]];
+    [0.5,0.8,0];[0.2,0.5,0];[0.2,0.5,0]]; 
 
 
 
@@ -29,19 +25,22 @@ rgb = [[0,0.2,0.8];[0.8,0,0.2];[0.5,0,0.8]; ...
 % -------------- retrieve metacognition data for inter-individual analyses:
 
 load groupSES1
+%[ppid,groupe_acc,groupe_rt,groupe_confLevel,groupe_confCorrIncorr];
 
-ppidmeta1    = groupSES1(:,1);
+ppidmeta1    = groupSES1(:,1); % NB: not in order
 acc1         = groupSES1(:,2);
 metacogbias1 = groupSES1(:,4);
 
 load groupSES2
+%[ppid,groupe_acc,groupe_rt,groupe_confLevel,groupe_confCorrIncorr,groupe_mratios_cl,groupe_hmratios'];
 
-ppidmeta2    = groupSES2(:,1);
+ppidmeta2    = groupSES2(:,1); % 67 participants did metacogtask2
 acc2         = groupSES2(:,2);
 metacogbias2 = groupSES2(:,4);
-metacogeff   = groupSES2(:,11);
+metacogeff   = groupSES2(:,9);%groupSES2(:,7);
 dotDiff2     = groupSES2(:,10);
-
+metacogeffsingle = groupSES2(:,11);
+metacogeff=metacogeffsingle;
 
 
 % -------------- retrieve RedCap data for inter-individual analyses:
@@ -80,7 +79,7 @@ age = age(2:end);
 sex = sex(2:end);
 medi = medi(2:end);
 
-% two medication regressors: whether the person takes
+% add two medication regressors instead of one: whether the person takes
 % immuno drugs and / or sedating drugs
 
 medi_details_data = read_medi_details("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/Imefa_medication_ZMM_220717.csv");
@@ -97,6 +96,17 @@ medi_sedate = medi_sedate(2:end);
 % -------------- retrieve RedCap data for sleep metrics
 
 sleep_data = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Sleep_DATA_2022-04-04_1511.csv");
+%sleep_data = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Sleep_DATA_2022-03-30_1704.csv");
+
+sleep_hours = sleep_data(ses==1,5);
+sleep_interrupt = sleep_data(ses==1,6);
+
+sleep_hours = sleep_hours(2:end,:);
+sleep_interrupt = sleep_interrupt(2:end,:);% de mm que demo, rm PPID1
+
+sleep_hours = table2array(sleep_hours);
+sleep_interrupt = table2array(sleep_interrupt);
+
 
 sleep_data_labels = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2IMEFA-Sleep_DATA_LABELS_2022-04-04_1511.csv");
 
@@ -105,8 +115,8 @@ sleep_data_labels = read_sleep("/Users/marion/Desktop/PDOC/fatigueZurich/fa_anal
 
 ppidpsqi = table2array(sleep_data_labels(ses==2,1));
 
-% Component 1: Subjective sleep quality?question 9
-psqi_cmp1 = sleep_data(ses==2,31);
+% Component 1: Subjective sleep quality?question 6
+psqi_cmp1 = sleep_data(ses==2,28);%sleep_data(ses==2,31);
 psqi_cmp1 = table2array(psqi_cmp1)';
 
 % Component 2: Sleep latency?questions 2 and 5a
@@ -167,7 +177,11 @@ clear j
 psqi_q1 = table2array(sleep_data(ses==2,13));%heure au lit
 psqi_q3 = table2array(sleep_data(ses==2,15));%heure debout
 
-% manual entry for sleep hours extraction:
+% hours_in_bed = hours(psqi_q3-psqi_q1);
+%fix format daytime
+% datevec(char(psqi_q3(2)))- datevec(char(psqi_q1(2)))
+
+%manual hack sad but efficient:
 hours_in_bed = [8.83 6.5 7.5 9 8 6.5 9.75 8.5 11 9.5 8.5 6.33 8.66 7.5 ...
     9 7.2 9.5 8.5 4.75 10 7.083 9 11 8.75 7.33 8 7.83 8 8.25 8.33 8.5 9.5 ...
     6.5 8 9.5 7.15 10 7.33 8 6.5 9 9.5 8.75 6.5 10 8.5 8.33 8 7.75 10 8.5 ...
@@ -206,23 +220,23 @@ end
 clear j
 
 
-% Component 6: Use of sleep medication?question 6
-psqi_q6 = table2array(sleep_data(ses==2,28));
+% Component 6: Use of sleep medication?question 7
+psqi_q6 = table2array(sleep_data(ses==2,29));%(ses==2,28));
 psqi_cmp6 = psqi_q6';
 
 
-% Component 7: Daytime dysfunction?questions 7 and 8
-psqi_q7 = table2array(sleep_data(ses==2,29));
+% Component 7: Daytime dysfunction?questions 8 and 9
 psqi_q8 = table2array(sleep_data(ses==2,30));
+psqi_q9 = table2array(sleep_data(ses==2,31));
 
-for j = 1:length(psqi_q7)
-    if psqi_q7(j) + psqi_q8(j) == 0
+for j = 1:length(psqi_q8)
+    if psqi_q8(j) + psqi_q9(j) == 0
         psqi_cmp7(j) = 0;
-    elseif (psqi_q7(j) + psqi_q8(j) == 1) || (psqi_q7(j) + psqi_q8(j) == 2)
+    elseif (psqi_q8(j) + psqi_q9(j) == 1) || (psqi_q8(j) + psqi_q9(j) == 2)
         psqi_cmp7(j) = 1;
-    elseif (psqi_q7(j) + psqi_q8(j) == 3) || (psqi_q7(j) + psqi_q8(j) == 4)
+    elseif (psqi_q8(j) + psqi_q9(j) == 3) || (psqi_q8(j) + psqi_q9(j) == 4)
         psqi_cmp7(j) = 2;
-    elseif psqi_q7(j) + psqi_q8(j) > 4
+    elseif psqi_q8(j) + psqi_q9(j) > 4
         psqi_cmp7(j) = 3;
     end
 end
@@ -233,7 +247,7 @@ psqi_tot = psqi_cmp1 + psqi_cmp2 + psqi_cmp3 + psqi_cmp4 + ...
     psqi_cmp5 + psqi_cmp6 + psqi_cmp7;
 
 % filter out patients who did do psqi and align with PPID
-% => 68 participants have psqi data
+% 68 participants have psqi data
 psqi_tot = psqi_tot(~isnan(psqi_tot))';
 
 
@@ -243,13 +257,13 @@ dates = read_diseaseDUR("/Users/marion/Desktop/PDOC/fatigueZurich/fa_analysis/2I
 
 dates = dates(ses==1,:);
 
-dates = dates(2:end,:);
+dates = dates(2:end,:);% de mm que demo, rm PPID1
 
 consent_day = table2array(dates(:,5));
 diagnostic_day = table2array(dates(:,6));
 
 diseaseDuration = hours(consent_day-diagnostic_day);
-diseaseDuration(diseaseDuration<0) = 0; % one person has mistake in dates
+diseaseDuration(diseaseDuration<0) = 0;%one person has mistake in dates
 
 
 
@@ -267,14 +281,14 @@ for i = 1:size(tblraw,1)
 end
 
 % filter out patients who did do mfis and align with PPID
-ppidmfis = tblraw(~isnan(mfis_tot),1); 
-% => 61 participants have mfis data
+ppidmfis = tblraw(~isnan(mfis_tot),1); % 61 participants have mfis data
 mfis_tot = mfis_tot(~isnan(mfis_tot));
 
 
 % get HDDM parameters for Metacognition task 1
 if which_hyp == 1
-    
+    % manually create hddm1.mat from:
+    %'/Users/marion/Desktop/PDOC/fatigueZurich/HDDM/data/fa_subjParams_2k_3chain.csv'
     load('hddm1.mat')
     
     ord_a1          = hddm1(1,:);
@@ -283,7 +297,11 @@ if which_hyp == 1
     ord_vdelta1     = hddm1(4,:);
     ord_hddm = sort(ppidmeta1);
     
-    % order the output of HDDM parameters
+    % order of output of HDDM do not match ppidmeta1, hence:
+    %     attention l?output est les participants rangés dans l?ordre de leur
+    %     subj_idx donc de leur PPID, alors que l?input file
+    %     testfulldata_mod.csv avait les PPID dans le désordre
+    
     a1          = zeros(length(ppidmeta1),1);
     t1          = zeros(length(ppidmeta1),1);
     vintercept1 = zeros(length(ppidmeta1),1);
@@ -303,7 +321,7 @@ end
 
 if which_hyp == 1
     x_acc1 = [];
-    x_a1 = [];
+    x_a1 = [];%4 DDM params (ppidmeta1 covers metacog + HDDM)
     x_t1 = [];
     x_vintercept1 = [];
     x_vdelta1 = [];
@@ -323,10 +341,13 @@ x_medi_sedate = [];
 x_dur = [];
 x_sleep = [];
 
+% chance level for metacognition task 1 and 2:
+seuil1 = quantile(mean(rand(114*2,1e5) < 0.5,1),.95); %114 trials
+seuil2 = quantile(mean(rand(108*2,1e5) < 0.5,1),.95); %108 trials
 
 for s = 1:length(ppiddemo) % the largest sample
     if which_hyp == 1
-        if ismember(s,ppidmfis) && ismember(s,ppidmeta1) && ismember(s,ppiddemo) && ismember(s,ppidpsqi)
+        if ismember(s,ppidmfis) && ismember(s,ppidmeta1) && ismember(s,ppiddemo) && ismember(s,ppidpsqi) && acc1(ppidmeta1==s)>seuil1
             % patient s has all required types of data: include in analysis
             
             % define dependent variable
@@ -352,10 +373,11 @@ for s = 1:length(ppiddemo) % the largest sample
         else
             disp(['missing some of the data for patient #',num2str(s)])
         end
-        % => 55 patients remained in B1 restricted pool
+        % => 57 patients remained in B1 restricted pool
+        % => 55 patients remained in B1 restricted pool with sleep
         
     elseif which_hyp == 2
-        if ismember(s,ppidmfis) && ismember(s,ppidmeta2) && ismember(s,ppiddemo) && ismember(s,ppidpsqi)
+        if ismember(s,ppidmfis) && ismember(s,ppidmeta2) && ismember(s,ppiddemo) && ismember(s,ppidpsqi) %&& acc2(ppidmeta2==s)>seuil2
             % patient s has all required types of data: include in analysis
             
             % define dependent variable
@@ -379,7 +401,7 @@ for s = 1:length(ppiddemo) % the largest sample
         else
             disp(['missing some of the data for patient #',num2str(s)])
         end
-        % => 56 patients remained in B2 restricted pool
+        % => 56 patients remained in B2 restricted pool (w and w/o sleep)
     end
 end
 
@@ -408,6 +430,7 @@ if which_hyp == 1
     x_vdelta1 = (x_vdelta1-mean(x_vdelta1))/std(x_vdelta1);
     x_age = (x_age-mean(x_age))/std(x_age);
     x_sex = (x_sex-mean(x_sex))/std(x_sex);
+    x_medi = (x_medi-mean(x_medi))/std(x_medi);
     x_medi_immuno = (x_medi_immuno-mean(x_medi_immuno))/std(x_medi_immuno);
     x_medi_sedate = (x_medi_sedate-mean(x_medi_sedate))/std(x_medi_sedate);
     x_dur = (x_dur-mean(x_dur))/std(x_dur);
@@ -415,7 +438,9 @@ if which_hyp == 1
     
     % build regressor matrix
     X1 = [x_metacogbias1 x_acc1 x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    %X1 = [x_metacogbias1 x_acc1 x_age x_sex x_medi x_dur x_sleep];
     X1hddm = [x_metacogbias1 x_a1 x_t1 x_vintercept1 x_vdelta1 x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    %X1hddm = [x_metacogbias1 x_a1 x_t1 x_vintercept1 x_vdelta1 x_age x_sex x_medi x_dur x_sleep];
     
     % perform regression
     [betaB1,~,statsB1] = glmfit(X1,y_mfis);
@@ -423,11 +448,13 @@ if which_hyp == 1
     
     % perform GLM to get F-test
     mdl = fitglm(X1,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8','Distribution','normal');
+    %mdl = fitglm(X1,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7','Distribution','normal');
     p_mdl = coefTest(mdl);
     disp 'Ftest Model B1 with MFIS, pvalue='
     p_mdl
     
     mdlhddm = fitglm(X1hddm,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10 + x11','Distribution','normal');
+    %mdlhddm = fitglm(X1hddm,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10','Distribution','normal');
     p_mdlhddm = coefTest(mdlhddm);
     disp 'Ftest Model B1 HDDM with MFIS, pvalue='
     p_mdlhddm
@@ -463,7 +490,7 @@ if which_hyp == 1
     disp 'tvalues:'
     statsB1hddm.t(2:end)
     disp 'pvalues:'
-    statsB1hddm.p(2:end)
+    statsB1hddm.p(2:end)    
     
     % examine Benjamini-Hochler FDR correction:
     orig_pvalues = [[1:length(statsB1hddm.p(2:end))]' statsB1hddm.p(2:end)];
@@ -475,13 +502,13 @@ if which_hyp == 1
     fdr_rate = .05;
     % how many tests do you want to correct for
     m = 5; % here, 4 DDM params and metacogbias
-    % calculate each individual p-values Benjamini-Hochberg critical value
+    % calculate each individual p-value?s Benjamini-Hochberg critical value
     ordered_pvalues(:,4) = ordered_pvalues(:,3)./m*fdr_rate;
     % identify the highest p-value that is also smaller than the critical value
     ordered_pvalues
     
     
-    
+
     % -------------- FIGURE B. Metacognition task 1 --------------
     
     hf = figure('Color','white');
@@ -502,6 +529,7 @@ if which_hyp == 1
     set(gca,'TickDir','out','TickLength',[1,1]*0.02/max(pbar,1));
     set(gca,'FontName','Helvetica','FontSize',10);
     set(gca,'XTick',1:size(X1,2),'XTickLabel',{'m.bias','accu','age','sex','mediImmuno','mediSedate','duration','sleep'});
+    %set(gca,'XTick',1:size(X1,2),'XTickLabel',{'m.bias','accu','age','sex','medic','duration','sleep'});
     ylabel('Regression coefficients','FontName','Helvetica','FontSize',10);
     xlabel('Contribution to fatigue scores (MFIS)','FontName','Helvetica','FontSize',10);
     
@@ -509,7 +537,8 @@ if which_hyp == 1
         'PaperPosition',[2.5,13,16,4],'PaperUnits','centimeters', ...
         'PaperType','A4','PaperOrientation','portrait');
     figure(hf);
-    fname = './FigureB1';
+    fname = './FigureB1_exclPerfs';
+    %fname = './FigureB1';
     if print_fig
         print(fname,'-painters','-dpdf');
     end
@@ -532,6 +561,7 @@ if which_hyp == 1
     set(gca,'TickDir','out','TickLength',[1,1]*0.02/max(pbar,1));
     set(gca,'FontName','Helvetica','FontSize',10);
     set(gca,'XTick',1:size(X1hddm,2),'XTickLabel',{'m.bias','a','t','vintercept','vdelta','age','sex','mediImmuno','mediSedate','duration','sleep'});
+    %set(gca,'XTick',1:size(X1hddm,2),'XTickLabel',{'m.bias','a','t','vintercept','vdelta','age','sex','medic','duration','sleep'});
     ylabel('Regression coefficients','FontName','Helvetica','FontSize',10);
     xlabel('Contribution to fatigue scores (MFIS)','FontName','Helvetica','FontSize',10);
     
@@ -539,7 +569,8 @@ if which_hyp == 1
         'PaperPosition',[2.5,13,16,4],'PaperUnits','centimeters', ...
         'PaperType','A4','PaperOrientation','portrait');
     figure(hf);
-    fname = './FigureB1hddm';
+    fname = './FigureB1hddm_exclPerfs';
+    %fname = './FigureB1hddm';
     if print_fig
         print(fname,'-painters','-dpdf');
     end
@@ -557,20 +588,27 @@ elseif which_hyp == 2
     % zscore our regressors for comparability of regressions coefs:
     x_metacogbias2 = (x_metacogbias2-mean(x_metacogbias2))/std(x_metacogbias2);
     x_metacogeff = (x_metacogeff-mean(x_metacogeff))/std(x_metacogeff);
+    x_acc2 = (x_acc2-mean(x_acc2))/std(x_acc2);
+    x_dots2 = (x_dots2-mean(x_dots2))/std(x_dots2);
     x_age = (x_age-mean(x_age))/std(x_age);
     x_sex = (x_sex-mean(x_sex))/std(x_sex);
     x_medi_immuno = (x_medi_immuno-mean(x_medi_immuno))/std(x_medi_immuno);
     x_medi_sedate = (x_medi_sedate-mean(x_medi_sedate))/std(x_medi_sedate);
+    %x_medi = (x_medi-mean(x_medi))/std(x_medi);
     x_dur = (x_dur-mean(x_dur))/std(x_dur);
     x_sleep = (x_sleep-mean(x_sleep))/std(x_sleep);
     
     % build regressor matrix
-    X2 = [x_metacogbias2 x_metacogeff x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    % X2 = [x_metacogbias2 x_metacogeff x_dots2 x_age x_sex x_medi x_dur x_sleep];
+    %X2 = [x_metacogbias2 x_metacogeff x_dots2 x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];
+    X2 = [x_metacogbias2 x_metacogeff x_age x_sex x_medi_immuno x_medi_sedate x_dur x_sleep];%acc already contained in metacogeff
+    %X2 = [x_metacogbias2 x_metacogeff x_acc2 x_age x_sex x_medi x_dur];
     
     % perform regression
     [betaB2,~,statsB2] = glmfit(X2,y_mfis);
     
     % perform GLM to get F-test
+    %mdl = fitglm(X2,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9','Distribution','normal');
     mdl = fitglm(X2,y_mfis,'y ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8','Distribution','normal');
     p_mdl = coefTest(mdl);
     disp 'Ftest Model B2 with MFIS, pvalue='
@@ -604,7 +642,10 @@ elseif which_hyp == 2
     set(gca,'Layer','top','Box','off','PlotBoxAspectRatio',[pbar,1,1]);
     set(gca,'TickDir','out','TickLength',[1,1]*0.02/max(pbar,1));
     set(gca,'FontName','Helvetica','FontSize',10);
+    %set(gca,'XTick',1:size(X2,2),'XTickLabel',{'m.bias','m.effi','dots','age','sex','mediImmuno','mediSedate','duration','sleep'});
+    %set(gca,'XTick',1:size(X2,2),'XTickLabel',{'m.bias','m.effi','dots','age','sex','medic','duration','sleep'});
     set(gca,'XTick',1:size(X2,2),'XTickLabel',{'m.bias','m.effi','age','sex','mediImmuno','mediSedate','duration','sleep'});
+    %set(gca,'XTick',1:size(X2,2),'XTickLabel',{'m.bias','m.effi','accu','age','sex','medic','duration'});
     ylabel('Regression coefficients','FontName','Helvetica','FontSize',10);
     xlabel('Contributors to fatigue scores (MFIS)','FontName','Helvetica','FontSize',10);
     
@@ -626,7 +667,7 @@ end
 
 if plot_demo
     if which_hyp == 1
-        figure;
+        figure; % sanity check: age should mean lower performance on metatask1
         plot(x_age,x_acc1,'bo');lsline
         ylabel('Performance Metacog task1','FontName','Helvetica','FontSize',15);
         xlabel('Patient age','FontName','Helvetica','FontSize',15);
@@ -773,4 +814,8 @@ if plot_demo
     print(fname,'-painters','-dpdf');
 end
 
+44
+
 end
+
+
